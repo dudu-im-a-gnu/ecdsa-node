@@ -1,7 +1,7 @@
 import { useState } from "react";
 import server from "./server";
 
-function Transfer({ address, setBalance }) {
+function Transfer({ address, setBalance, nonce, setNonce }) {
   const [sendAmount, setSendAmount] = useState("");
   const [recipient, setRecipient] = useState("");
 
@@ -15,10 +15,12 @@ function Transfer({ address, setBalance }) {
         data: { balance },
       } = await server.post(`send`, {
         sender: address,
-        amount: parseInt(sendAmount),
+        amount: parseFloat(sendAmount), // Server will reject franctional amount
         recipient,
+        nonce,
       });
       setBalance(balance);
+      setNonce(nonce + 1);
     } catch (ex) {
       alert(ex.response.data.message);
     }
@@ -31,7 +33,7 @@ function Transfer({ address, setBalance }) {
       <label>
         Send Amount
         <input
-          placeholder="1, 2, 3..."
+          placeholder="Positive integer value"
           value={sendAmount}
           onChange={setValue(setSendAmount)}
         ></input>
@@ -40,7 +42,7 @@ function Transfer({ address, setBalance }) {
       <label>
         Recipient
         <input
-          placeholder="Type an address, for example: 0x2"
+          placeholder="Type an EVM address (0x followed by 40 hex digits)"
           value={recipient}
           onChange={setValue(setRecipient)}
         ></input>
