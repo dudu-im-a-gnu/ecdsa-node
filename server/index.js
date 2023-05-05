@@ -20,17 +20,23 @@ app.get("/balance/:address", (req, res) => {
   res.send({ balance });
 });
 
+app.get("/nextnonce/:address", (req, res) => {
+  const { address } = req.params;
+  const nonce = nonces[address] || 0;
+  res.send({ nonce });
+});
+
 app.post("/send", (req, res) => {
-  const { sender, recipient, amount, nonce } = req.body;
+  const { sender, recipient, amount } = req.body;
 
   setInitialBalance(sender);
   setInitialBalance(recipient);
-  initializeAddressNonceSet(sender);
+  initializeAddressNonce(sender);
 
   switch(true) {
-    case nonces[sender].has(nonce):
-      res.status(400).send({ message: "Can't replay an old transaction!" });
-      break;
+    // case nonces[sender] !== nonce:
+    //   res.status(400).send({ message: "Can't replay an old transaction!" });
+    //   break;
     case typeof recipient !== 'string':
     case recipient.length !== 42:
     case recipient.slice(0,2).toLowerCase() !== "0x":
@@ -50,10 +56,10 @@ app.post("/send", (req, res) => {
       res.status(400).send({ message: "Can't transfer to yourself!" });
       break;
     default:
-      nonces[sender].add(nonce);
+      // nonces[sender].add(nonce);
       balances[sender] -= amount;
       balances[recipient] += amount;
-      res.send({ balance: balances[sender] });
+      res.send({ balance: balances[sender], nonce: ++(nonces[sender]) });
       break;
   }
 });
@@ -63,11 +69,9 @@ app.listen(port, () => {
 });
 
 function setInitialBalance(address) {
-  if (!balances[address]) {
-    balances[address] = 0;
-  }
+  if (!(address in balances)) balances[address] = 0;
 }
 
-function initializeAddressNonceSet(address) {
-  if(!(address in nonces)) nonces[address] = new Set();
+function initializeAddressNonce(address) {
+  if(!(address in nonces)) nonces[address] = 0;
 }

@@ -15,8 +15,10 @@ function App() {
         setBalance={setBalance}
         address={address}
         setAddress={setAddress}
+        nonce={nonce}
+        setNonce={setNonce}
       />
-      <Transfer setBalance={setBalance} address={address} nonce={nonce} setNonce={setNonce}/>
+      <Transfer setBalance={setBalance} address={address} setNonce={setNonce}/>
     </div>
   );
 }

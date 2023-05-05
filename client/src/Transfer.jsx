@@ -1,7 +1,7 @@
 import { useState } from "react";
 import server from "./server";
 
-function Transfer({ address, setBalance, nonce, setNonce }) {
+function Transfer({ address, setBalance, setNonce }) {
   const [sendAmount, setSendAmount] = useState("");
   const [recipient, setRecipient] = useState("");
 
@@ -12,15 +12,14 @@ function Transfer({ address, setBalance, nonce, setNonce }) {
 
     try {
       const {
-        data: { balance },
+        data: { balance, nonce },
       } = await server.post(`send`, {
         sender: address,
-        amount: parseFloat(sendAmount), // Server will reject franctional amount
+        amount: parseFloat(sendAmount), // Server will reject non-integer
         recipient,
-        nonce,
       });
       setBalance(balance);
-      setNonce(nonce + 1);
+      setNonce(nonce);
     } catch (ex) {
       alert(ex.response.data.message);
     }
