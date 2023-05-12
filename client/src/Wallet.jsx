@@ -1,10 +1,13 @@
 import server from "./server";
+import { stringifyMsgJSON, testValidEVMAddress } from
+  "./miscSuppRoutines";
 
-function Wallet({ address, setAddress, balance, setBalance, nonce, setNonce }) {
+function Wallet({ address, setAddress, balance, setBalance, setNonce,
+  sendAmount, recipient, setMsgJSON }) {
   async function onChange(evt) {
     const address = evt.target.value;
     setAddress(address);
-    if (address) {
+    if (testValidEVMAddress(address)) {
       const {
         data: { balance },
       } = await server.get(`balance/${address}`);
@@ -13,10 +16,15 @@ function Wallet({ address, setAddress, balance, setBalance, nonce, setNonce }) {
       } = await server.get(`nextnonce/${address}`);
       setBalance(balance);
       setNonce(nonce);
+      if(sendAmount && testValidEVMAddress(recipient))
+      setMsgJSON(stringifyMsgJSON(nonce.toString(), recipient,
+        sendAmount));
+      else setMsgJSON("");
     }
     else {
       setBalance(0);
       setNonce(0);
+      setMsgJSON("");
     }
   }
 
@@ -26,11 +34,11 @@ function Wallet({ address, setAddress, balance, setBalance, nonce, setNonce }) {
 
       <label>
         Wallet Address
-        <input placeholder="Type an EVM address (0x followed by 40 hex digits)" value={address} onChange={onChange}></input>
+        <input placeholder="Enter an EVM address (0x then 40 hex digits)"
+          value={address} onChange={onChange}></input>
       </label>
 
       <div className="balance">Balance: {balance}</div>
-      <div className="nonce">Next nonce: {nonce}</div>
     </div>
   );
 }

@@ -1,3 +1,7 @@
+const secp = require("ethereum-cryptography/secp256k1");
+const { keccak256 } = require("ethereum-cryptography/keccak");
+const { utf8ToBytes, toHex } = require("ethereum-cryptography/utils");
+
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -27,41 +31,70 @@ app.get("/nextnonce/:address", (req, res) => {
 });
 
 app.post("/send", (req, res) => {
-  const { sender, recipient, amount } = req.body;
+  const { amount, recipient, nonce, msgFullSig} = req.body;
+  let sender, returnMessage;
+
+  try {
+    const msgObject = {
+    nonce: nonce.toString(),
+    to: recipient,
+    value: amount.toString(),
+    }
+    const msgJSON = JSON.stringify(msgObject);
+    const messageHash = toHex(keccak256(utf8ToBytes(msgJSON)));
+    const msgSig = msgFullSig.slice(2, -1);
+    const msgRecoveryBit = parseInt(msgFullSig.slice(-1));
+    const senderPublicKey = secp.recoverPublicKey(messageHash,
+      msgSig, msgRecoveryBit);
+    sender = "0x" +
+      toHex(keccak256(senderPublicKey.slice(1)).slice(-20));
+  }
+  catch(err) {
+    res.status(400).send({ message: "Malformed signature!" });
+    return;
+  }
 
   setInitialBalance(sender);
   setInitialBalance(recipient);
   initializeAddressNonce(sender);
 
+  const amountAsNum = parseFloat(amount); // (Check for int is below)
+
   switch(true) {
-    // case nonces[sender] !== nonce:
-    //   res.status(400).send({ message: "Can't replay an old transaction!" });
-    //   break;
+    case typeof sender !== 'string':
+    case sender.length !== 42:
+    case sender.slice(0,2).toLowerCase() !== "0x":
+    case sender.slice(2).search(/[^a-fA-F0-9]/) !== -1:
+    case nonce !== nonces[sender]:
     case typeof recipient !== 'string':
     case recipient.length !== 42:
     case recipient.slice(0,2).toLowerCase() !== "0x":
-    case Number.isNaN(parseInt(recipient, 16)):
-      res.status(400).send({ message: "Invalid recipient address!" });
-      break;
-    case !Number.isInteger(amount):
-      res.status(400).send({ message: "Can only transfer integer amounts!\n(Must be < " + Number.MAX_SAFE_INTEGER + ")" });
-      break;
-    case amount < 1:
-      res.status(400).send({ message: "Transfer must be for 1 or more!" });
-      break;
+    case recipient.slice(2).search(/[^a-fA-F0-9]/) !== -1:
     case balances[sender] < amount:
-      res.status(400).send({ message: "Not enough funds!\nIs your wallet address correct?" });
+      returnMessage = { message:
+        "Invalid signature or transaction details!" };
       break;
-    case recipient == sender:
-      res.status(400).send({ message: "Can't transfer to yourself!" });
+    case !Number.isInteger(amountAsNum):
+      returnMessage = { message:
+        "Can only transfer integer amounts!\n(Must be < " +
+        Number.MAX_SAFE_INTEGER + ")" };
+      break;
+    case amountAsNum < 1:
+      returnMessage = { message: "Transfer must be for 1 or more!" };
+      break;
+    case recipient === sender:
+      returnMessage = { message: "Can't transfer to yourself!" };
       break;
     default:
-      // nonces[sender].add(nonce);
-      balances[sender] -= amount;
-      balances[recipient] += amount;
-      res.send({ balance: balances[sender], nonce: ++(nonces[sender]) });
-      break;
+      // No error, so let's wrap up:
+      balances[sender] -= amountAsNum;
+      balances[recipient] += amountAsNum;
+      res.send({ balance: balances[sender],
+        newNonce: ++(nonces[sender]) });
+      return;
   }
+  // Switch block has an error, so:
+  res.status(400).send(returnMessage);
 });
 
 app.listen(port, () => {
