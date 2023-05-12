@@ -8,7 +8,7 @@ In this project, each sender's address is associated with an incrementing nonce 
 
 Restarting the Express server app will reset all addresses, balances and nonces to their initital state.
 
-For the sake of demonstartion, only three EVM addresses have balances when the Express server is started. These are:
+For the sake of demonstration, only three EVM addresses have balances when the Express server is started. These are:
 
 1. 0x7136dbf5c587f3a529a91d05c36d7957f41dd57b
 2. 0xfcad0b19bb29d4674531d6f115237e16afce377c
@@ -26,7 +26,7 @@ Two optional new offline command line Javascript apps are included in this repo.
 
 ### Server and Client apps
 
-Please follow the instructions from Alchemy's original readme.md which is copied here as [readmeAlchemy.md](https://github.com/dudu-im-a-gnu/ecdsa-node/readmeAlchemy.md).
+Please follow the instructions from Alchemy's original readme.md which is copied here as [readmeAlchemy.md](./readmeAlchemy.md).
 
 ### makekey
 
