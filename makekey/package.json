@@ -1,0 +1,14 @@
+{
+  "name": "makekey",
+  "version": "1.0.0",
+  "description": "Utility to generate private key / EVM address pairs",
+  "main": "makekey.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Richard Hughes",
+  "license": "ISC",
+  "dependencies": {
+    "ethereum-cryptography": "^1.2.0"
+  }
+}
